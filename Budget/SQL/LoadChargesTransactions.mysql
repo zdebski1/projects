@@ -37,8 +37,9 @@ SELECT
 	,NOW() AS validFromDateTime
 	,NULL AS validToDateTime
 FROM stage.ChargesTransactions CT
+LEFT JOIN dbo.ChargesTransactions PCT ON PCT.date = CT.date AND PCT.description = CT.description AND CAST(PCT.amount AS DECIMAL) = CAST(CT.amount AS DECIMAL) AND PCT.status = CT.status
 LEFT JOIN tlkp.sourcetocommmoncode STCC ON STCC.sourceDescription = CT.description
-	WHERE date <> 'date';
+	WHERE CT.date <> 'date' AND PCT.Date is NULL;
     
     
 END
