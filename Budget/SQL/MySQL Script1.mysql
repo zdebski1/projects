@@ -1,0 +1,44 @@
+CREATE DEFINER=`root`@`localhost` PROCEDURE `LoadChargesTransactions`()
+BEGIN
+-- CREATE TABLE stage.ChargesTransactions 
+--  (
+-- ID INT NOT NULL AUTO_INCREMENT KEY
+-- ,date VARCHAR(1000) 
+-- ,description VARCHAR(1000)
+-- ,originalDescription VARCHAR(1000)
+-- ,category VARCHAR(100)
+-- ,amount VARCHAR(1000)
+-- ,status VARCHAR(1000)
+-- );
+
+-- CREATE TABLE dbo.ChargesTransactions  
+--  (
+--  chargeTransactionKey INT NOT NULL AUTO_INCREMENT KEY
+-- ,sourceToCommonCodeKey INT
+-- ,date dateTime NOT NULL
+-- ,description VARCHAR(1000) NOT NULL
+-- ,amount DECIMAL NOT NULL
+-- ,status VARCHAR(1000) NOT NULL
+-- ,isActive INT NOT NULL
+-- ,validFromDateTime dateTime NOT NULL
+-- ,validToDateTime dateTime NULL
+-- );
+
+
+
+INSERT INTO  dbo.ChargesTransactions  (sourceToCommonCodeKey,date,description,amount,status,isActive,validFromDateTime,validToDateTime)
+SELECT
+	 STCC.sourceToCommonCodeKey
+	,CAST(CT.date AS dateTime) AS date
+	,CT.description
+	,CAST(CT.amount AS DECIMAL) AS amount 
+	,CT.status
+	,1 AS isActive
+	,NOW() AS validFromDateTime
+	,NULL AS validToDateTime
+FROM stage.ChargesTransactions CT
+LEFT JOIN tlkp.sourcetocommmoncode STCC ON STCC.sourceDescription = CT.description
+	WHERE date <> 'date';
+    
+    
+END
