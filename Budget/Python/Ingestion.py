@@ -1,23 +1,46 @@
 import mysql.connector
-import csv
+import pandas as pd
+import glob
+import os 
 
-mydb = mysql.connector.connect(host='localhost', user='Zdebski', passwd = 'Debski1515@')
-with open(r'C:\Users\Brittany\Desktop\Repos\Python\Budget\Data\march\bk_download.csv') as csv_file:
-        csvfile = csv.reader(csv_file, delimiter = ',')
-        all_value =[]
-        for row in csvfile:
-                value = (row[0],row[1],row[2],row[3],row[4],row[5])
-                all_value.append(value)
-#csv_data = pd.read_csv(r'C:\Users\Brittany\Desktop\Repos\Python\Budget\Data\bk_download.csv')
+from sqlalchemy  import create_engine
 
-#truncate the staging table before inserting more data... 
-#the data lives in files that are always available so no need to kee staging data forever
 
-truncatequery = "TRUNCATE TABLE stage.ChargesTransactions"
-insertQuery =  "Insert Into stage.ChargesTransactions (date, description, originalDescription,category,amount, status) VALUE (%s,%s,%s,%s,%s,%s)"
+
+path = r'C:\Users\Brittany\Desktop\Repos\Python\Budget\Data\march'
+
+# find the latest csv file in a directory
+list_of_files = glob.glob(r'C:\Users\Brittany\Desktop\Repos\Python\Budget\Data\march\*')
+latest_file = max(list_of_files, key=os.path.getctime)
+
+df=pd.read_csv(latest_file)
+df = df.reset_index(drop=True)
+
+
+mydb = mysql.connector.connect(host='localhost', user='Zdebski', passwd = 'Debski1515')
+
+# truncatequery = "TRUNCATE TABLE stage.ChargesTransactions"
+# mycursor = mydb.cursor()
+# mycursor.execute(truncatequery)
+# mydb.commit()
+
+
+engine = create_engine("mysql://Zdebski:Debski1515@localhost/stage")
+con = engine.connect()
+
+df.to_sql(name='chargestransactions',con=con,if_exists='replace',index=False,schema='stage')
+
+con.commit()
+
+
+#execute the load into production table
+
+
+executequery = "CALL dbo.LoadChargesTransactions;"
 mycursor = mydb.cursor()
-
-mycursor.execute(truncatequery)
-mycursor.executemany(insertQuery,all_value)
-
+mycursor.execute(executequery)
 mydb.commit()
+
+
+
+print('Finish Import')
